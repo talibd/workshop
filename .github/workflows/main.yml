@@ -14,4 +14,4 @@ jobs:
         server: ftp.lovyadesignstudio.in
         username: workshop89@menu.medclasses.in
         password: HEc&Mck[v&9x
-        server-dir: public_html/workshop/
+        # server-dir: public_html/workshop/
