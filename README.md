@@ -82,3 +82,24 @@ curl -X POST http://localhost:5000/render \
 ```
 
 The response contains the path to the rendered video in `static/exports`.
+
+### Preview Clips
+
+The `backend/ffmpeg_utils.py` module also exposes a
+`generate_preview_clip` function for creating short clips from any point
+in a video. Provide the timestamp where the clip should start along
+with optional overlay images. The function outputs a 10‑second segment
+with burned subtitles and b‑roll overlays.
+
+```python
+from ffmpeg_utils import generate_preview_clip
+
+generate_preview_clip(
+    "source.mp4",
+    "captions.srt",
+    [("overlay.jpg", 2, 3)],
+    timestamp=30,
+    output_path="preview.mp4",
+)
+```
+
