@@ -2,6 +2,23 @@ import subprocess
 from typing import List, Tuple
 
 
+def _hex_to_ass_color(hex_color: str) -> str:
+    """Convert ``#RRGGBB`` into ``&H00BBGGRR`` format used by ASS styles."""
+    hex_color = hex_color.lstrip("#")
+    if len(hex_color) != 6:
+        raise ValueError("invalid color format")
+    r = hex_color[0:2]
+    g = hex_color[2:4]
+    b = hex_color[4:6]
+    return f"&H00{b}{g}{r}"
+
+
+def _position_to_alignment(pos: str) -> int:
+    """Return ASS alignment value for a simple position string."""
+    mapping = {"bottom": 2, "top": 8, "center": 5}
+    return mapping.get(pos, 2)
+
+
 def _get_video_size(path: str) -> Tuple[int, int]:
     """Return width and height of the given video using ffprobe."""
     cmd = [
@@ -45,6 +62,9 @@ def compose_video(
     overlays: List[Tuple[str, float, float]],
     layout: str = "fullscreen",
     output_path: str = "output.mp4",
+    font_size: int = 24,
+    font_color: str = "#ffffff",
+    position: str = "bottom",
 ) -> str:
     """Burn subtitles and overlay images onto a video using FFmpeg.
 
@@ -61,6 +81,12 @@ def compose_video(
         control the overlay placement.
     output_path: str
         Where to write the resulting video.
+    font_size: int
+        Font size for burned subtitles.
+    font_color: str
+        Hex color (``"#RRGGBB"``) for subtitle text.
+    position: str
+        One of ``"bottom"``, ``"top"`` or ``"center"`` subtitle placement.
 
     Returns
     -------
@@ -68,6 +94,9 @@ def compose_video(
         The path to the rendered video.
     """
     width, height = _get_video_size(video_path)
+    alignment = _position_to_alignment(position)
+    color_code = _hex_to_ass_color(font_color)
+    force_style = f"Fontsize={font_size},PrimaryColour={color_code},Alignment={alignment}"
 
     # Prepare input arguments
     cmd = ["ffmpeg", "-y", "-i", video_path]
@@ -75,7 +104,7 @@ def compose_video(
         cmd.extend(["-loop", "1", "-t", str(duration), "-i", img])
 
     # Build filter complex
-    filter_parts = [f"[0:v]subtitles={subtitles_path}[v0]"]
+    filter_parts = [f"[0:v]subtitles={subtitles_path}:force_style='{force_style}'[v0]"]
     current = "v0"
     for idx, (_, start, duration) in enumerate(overlays, 1):
         scale, pos = _layout_params(layout, width, height)

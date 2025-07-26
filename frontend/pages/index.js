@@ -8,7 +8,8 @@ export default function UploadPage() {
     fontFamily: 'Arial',
     fontSize: '24',
     color: '#ffffff',
-    backgroundColor: '#00000080'
+    backgroundColor: '#00000080',
+    position: 'bottom'
   });
 
   const handleFileChange = (e) => {
@@ -26,6 +27,25 @@ export default function UploadPage() {
   const handleStyleChange = (e) => {
     const { name, value } = e.target;
     setSubtitleStyle({ ...subtitleStyle, [name]: value });
+  };
+
+  const handleRender = async () => {
+    const payload = {
+      fontSize: subtitleStyle.fontSize,
+      fontColor: subtitleStyle.color,
+      position: subtitleStyle.position,
+      video: 'video.mp4',
+      subtitles: 'subs.srt'
+    };
+    try {
+      await fetch('http://localhost:5000/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const videoUrl = videoFile ? URL.createObjectURL(videoFile) : null;
@@ -65,6 +85,15 @@ export default function UploadPage() {
           Background:
           <input type="color" name="backgroundColor" value={subtitleStyle.backgroundColor} onChange={handleStyleChange} />
         </label>
+
+        <label>
+          Position:
+          <select name="position" value={subtitleStyle.position} onChange={handleStyleChange}>
+            <option value="bottom">Bottom</option>
+            <option value="top">Top</option>
+            <option value="center">Center</option>
+          </select>
+        </label>
       </div>
 
       {videoUrl && (
@@ -76,7 +105,10 @@ export default function UploadPage() {
               fontFamily: subtitleStyle.fontFamily,
               fontSize: subtitleStyle.fontSize + 'px',
               color: subtitleStyle.color,
-              backgroundColor: subtitleStyle.backgroundColor
+              backgroundColor: subtitleStyle.backgroundColor,
+              bottom: subtitleStyle.position === 'bottom' ? '10px' : 'auto',
+              top: subtitleStyle.position === 'top' ? '10px' : subtitleStyle.position === 'center' ? '50%' : 'auto',
+              transform: subtitleStyle.position === 'center' ? 'translateY(-50%)' : 'none'
             }}
           >
             Subtitle Preview
@@ -106,6 +138,8 @@ export default function UploadPage() {
         </div>
       </div>
 
+      <button className="render-btn" onClick={handleRender}>Render</button>
+
       <style jsx>{`
         .container {
           padding: 2rem;
@@ -120,7 +154,6 @@ export default function UploadPage() {
         }
         .subtitle-preview {
           position: absolute;
-          bottom: 10px;
           width: 100%;
           text-align: center;
           pointer-events: none;
@@ -137,6 +170,11 @@ export default function UploadPage() {
           height: 80px;
           margin-right: 0.5rem;
           margin-bottom: 0.5rem;
+        }
+        .render-btn {
+          margin-top: 1rem;
+          padding: 0.5rem 1rem;
+          font-size: 1rem;
         }
       `}</style>
     </div>
