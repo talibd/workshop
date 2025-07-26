@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import os
+from werkzeug.utils import secure_filename
 
 from keywords import extract_keywords
 from unsplash_utils import fetch_images
@@ -58,20 +59,43 @@ def upload_file():
 
 @app.route('/render', methods=['POST'])
 def render_video():
-    data = request.get_json(force=True)
-    video = data.get('video')
-    subtitles = data.get('subtitles')
-    if not video or not subtitles:
+    """Render a video with optional overlays and subtitle styling."""
+    if 'video' not in request.files or 'subtitles' not in request.files:
         return jsonify({'error': 'video and subtitles required'}), 400
-    font_size = int(data.get('fontSize', 24))
-    font_color = data.get('fontColor', '#ffffff')
-    position = data.get('position', 'bottom')
-    output_path = os.path.join('static', 'exports', 'rendered.mp4')
+
+    video_file = request.files['video']
+    subs_file = request.files['subtitles']
+    if video_file.filename == '' or subs_file.filename == '':
+        return jsonify({'error': 'empty filename provided'}), 400
+
+    video_path = os.path.join(UPLOAD_FOLDER, secure_filename(video_file.filename))
+    subs_path = os.path.join(UPLOAD_FOLDER, secure_filename(subs_file.filename))
+    video_file.save(video_path)
+    subs_file.save(subs_path)
+
+    # Save optional overlay images
+    overlays = []
+    start = 0.0
+    duration = 3.0
+    for img in request.files.getlist('images'):
+        if img.filename:
+            img_path = os.path.join(UPLOAD_FOLDER, secure_filename(img.filename))
+            img.save(img_path)
+            overlays.append((img_path, start, duration))
+            start += duration
+
+    font_size = int(request.form.get('fontSize', 24))
+    font_color = request.form.get('fontColor', '#ffffff')
+    position = request.form.get('position', 'bottom')
+
+    output_dir = os.path.join('static', 'exports')
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, 'rendered.mp4')
     try:
         compose_video(
-            video,
-            subtitles,
-            [],
+            video_path,
+            subs_path,
+            overlays,
             output_path=output_path,
             font_size=font_size,
             font_color=font_color,

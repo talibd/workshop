@@ -66,14 +66,19 @@ export UNSPLASH_ACCESS_KEY=your-unsplash-key
 
 ## Video Rendering with FFmpeg
 
-The `/render` endpoint accepts subtitle style options which are passed directly
-to FFmpeg. Send a JSON payload containing at least `video` and `subtitles` along
-with optional `fontSize`, `fontColor` and `position` keys:
+The `/render` endpoint now accepts a video file, an `.srt` subtitle file and
+optionally multiple overlay images. Styling options for the subtitles can be
+specified using form fields. All data should be sent as `multipart/form-data`:
 
 ```bash
 curl -X POST http://localhost:5000/render \
-  -H 'Content-Type: application/json' \
-  -d '{"video": "video.mp4", "subtitles": "captions.srt", "fontSize": 32, "fontColor": "#ff0000", "position": "top"}'
+  -F "video=@path/to/video.mp4" \
+  -F "subtitles=@path/to/captions.srt" \
+  -F "images=@path/to/overlay1.jpg" \
+  -F "images=@path/to/overlay2.jpg" \
+  -F "fontSize=32" \
+  -F "fontColor=#ff0000" \
+  -F "position=top"
 ```
 
 The response contains the path to the rendered video in `static/exports`.
