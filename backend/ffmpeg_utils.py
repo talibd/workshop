@@ -137,3 +137,87 @@ def compose_video(
         raise RuntimeError(f"ffmpeg failed: {result.stderr}")
 
     return output_path
+
+
+def generate_preview_clip(
+    video_path: str,
+    subtitles_path: str,
+    overlays: List[Tuple[str, float, float]],
+    timestamp: float,
+    layout: str = "fullscreen",
+    output_path: str = "preview.mp4",
+    font_size: int = 24,
+    font_color: str = "#ffffff",
+    position: str = "bottom",
+) -> str:
+    """Create a 10-second clip starting at ``timestamp`` with overlays.
+
+    Parameters
+    ----------
+    video_path: str
+        Path to the source video.
+    subtitles_path: str
+        Path to an SRT subtitle file to burn into the clip.
+    overlays: List[Tuple[str, float, float]]
+        Each tuple contains (image_path, start_time, duration) where
+        ``start_time`` is relative to the beginning of the preview clip.
+    timestamp: float
+        The start time of the preview in the original video.
+    layout: str
+        Overlay placement, same options as ``compose_video``.
+    output_path: str
+        Where to write the resulting clip.
+    font_size: int
+        Font size for burned subtitles.
+    font_color: str
+        Hex color (``"#RRGGBB"``) for subtitle text.
+    position: str
+        Subtitle placement (``"bottom"``, ``"top"`` or ``"center"``).
+
+    Returns
+    -------
+    str
+        The path to the preview clip.
+    """
+    width, height = _get_video_size(video_path)
+    alignment = _position_to_alignment(position)
+    color_code = _hex_to_ass_color(font_color)
+    force_style = f"Fontsize={font_size},PrimaryColour={color_code},Alignment={alignment}"
+
+    cmd = ["ffmpeg", "-y", "-ss", str(timestamp), "-t", "10", "-i", video_path]
+    for img, _, duration in overlays:
+        cmd.extend(["-loop", "1", "-t", str(duration), "-i", img])
+
+    filter_parts = [f"[0:v]subtitles={subtitles_path}:force_style='{force_style}'[v0]"]
+    current = "v0"
+    for idx, (_, start, duration) in enumerate(overlays, 1):
+        scale, pos = _layout_params(layout, width, height)
+        filter_parts.append(f"[{idx}:v]scale={scale}[ov{idx}]")
+        filter_parts.append(
+            f"[{current}][ov{idx}]overlay={pos}:enable='between(t,{start},{start + duration})'[v{idx}]"
+        )
+        current = f"v{idx}"
+
+    filter_complex = ";".join(filter_parts)
+
+    cmd.extend([
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        f"[{current}]",
+        "-map",
+        "0:a?",
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "aac",
+        "-movflags",
+        "+faststart",
+        output_path,
+    ])
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {result.stderr}")
+
+    return output_path
