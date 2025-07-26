@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 import os
 
+from keywords import extract_keywords
+from unsplash import fetch_images
+
 try:
     import openai
 except ImportError:  # pragma: no cover - library may not be installed in CI
@@ -42,7 +45,14 @@ def upload_file():
     transcript = transcribe_file(file_path)
     if 'error' in transcript:
         return jsonify(transcript), 500
-    return jsonify(transcript), 200
+    text = transcript.get('text', '') if isinstance(transcript, dict) else ''
+    keywords = extract_keywords(text) if text else []
+    images = fetch_images(keywords) if keywords else {}
+    return jsonify({
+        'transcript': transcript,
+        'keywords': keywords,
+        'images': images,
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
