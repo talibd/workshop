@@ -3,6 +3,7 @@ import KeywordToggleList from '../components/KeywordToggleList';
 
 export default function UploadPage() {
   const [videoFile, setVideoFile] = useState(null);
+  const [brollImages, setBrollImages] = useState([]);
   const [subtitleStyle, setSubtitleStyle] = useState({
     fontFamily: 'Arial',
     fontSize: '24',
@@ -15,6 +16,11 @@ export default function UploadPage() {
     if (file) {
       setVideoFile(file);
     }
+  };
+
+  const handleBrollChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setBrollImages(files);
   };
 
   const handleStyleChange = (e) => {
@@ -80,6 +86,26 @@ export default function UploadPage() {
 
       <KeywordToggleList keywords={["nature", "people", "technology"]} />
 
+      <div className="broll-upload">
+        <h2>Upload B-roll Images</h2>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleBrollChange}
+        />
+        <div className="broll-previews">
+          {brollImages.map((img, idx) => (
+            <img
+              key={idx}
+              src={URL.createObjectURL(img)}
+              alt={`b-roll ${idx + 1}`}
+              className="broll-thumb"
+            />
+          ))}
+        </div>
+      </div>
+
       <style jsx>{`
         .container {
           padding: 2rem;
@@ -98,6 +124,19 @@ export default function UploadPage() {
           width: 100%;
           text-align: center;
           pointer-events: none;
+        }
+        .broll-upload {
+          margin-top: 2rem;
+        }
+        .broll-previews {
+          display: flex;
+          flex-wrap: wrap;
+          margin-top: 0.5rem;
+        }
+        .broll-thumb {
+          height: 80px;
+          margin-right: 0.5rem;
+          margin-bottom: 0.5rem;
         }
       `}</style>
     </div>
