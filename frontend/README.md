@@ -17,3 +17,8 @@ npm run dev
 ```
 
 Then open `http://localhost:3000` in your browser to view the page.
+
+### B-roll Uploads
+
+The video upload page now includes an input for uploading your own b-roll images.
+Select one or more image files to preview and use them as alternatives to the images fetched automatically from Unsplash.
