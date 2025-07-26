@@ -34,3 +34,21 @@ curl -F "file=@path/to/video.mp4" http://localhost:5000/upload
 ```
 The server responds with the JSON transcription result, including the full text
 and timestamped segments. The file is also saved in the `uploads/` directory.
+
+## Keyword Extraction
+
+The `keywords.py` module provides an `extract_keywords` function that uses spaCy
+to find the most frequent nouns and verbs in a transcript. Example:
+
+```python
+from keywords import extract_keywords
+
+text = "The quick brown fox jumps over the lazy dog."
+print(extract_keywords(text))
+```
+
+The function requires the `en_core_web_sm` model to be installed:
+
+```bash
+python -m spacy download en_core_web_sm
+```
