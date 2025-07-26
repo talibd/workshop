@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import KeywordToggleList from '../components/KeywordToggleList';
 
 export default function UploadPage() {
   const [videoFile, setVideoFile] = useState(null);
@@ -76,6 +77,8 @@ export default function UploadPage() {
           </div>
         </div>
       )}
+
+      <KeywordToggleList keywords={["nature", "people", "technology"]} />
 
       <style jsx>{`
         .container {
