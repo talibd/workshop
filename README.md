@@ -52,3 +52,14 @@ The function requires the `en_core_web_sm` model to be installed:
 ```bash
 python -m spacy download en_core_web_sm
 ```
+
+## Unsplash Image Fetching
+
+Set the `UNSPLASH_ACCESS_KEY` environment variable to allow the application to
+retrieve one image from Unsplash for each extracted keyword when uploading a
+file. The `/upload` response will then include a list of keywords and a mapping
+of those keywords to image URLs.
+
+```bash
+export UNSPLASH_ACCESS_KEY=your-unsplash-key
+```
