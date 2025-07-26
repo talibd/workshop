@@ -63,3 +63,17 @@ of those keywords to image URLs.
 ```bash
 export UNSPLASH_ACCESS_KEY=your-unsplash-key
 ```
+
+## Video Rendering with FFmpeg
+
+The `/render` endpoint accepts subtitle style options which are passed directly
+to FFmpeg. Send a JSON payload containing at least `video` and `subtitles` along
+with optional `fontSize`, `fontColor` and `position` keys:
+
+```bash
+curl -X POST http://localhost:5000/render \
+  -H 'Content-Type: application/json' \
+  -d '{"video": "video.mp4", "subtitles": "captions.srt", "fontSize": 32, "fontColor": "#ff0000", "position": "top"}'
+```
+
+The response contains the path to the rendered video in `static/exports`.

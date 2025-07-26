@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 import os
 
 from keywords import extract_keywords
-from unsplash import fetch_images
+from unsplash_utils import fetch_images
+from ffmpeg_utils import compose_video
 
 try:
     import openai
@@ -53,6 +54,33 @@ def upload_file():
         'keywords': keywords,
         'images': images,
     }), 200
+
+
+@app.route('/render', methods=['POST'])
+def render_video():
+    data = request.get_json(force=True)
+    video = data.get('video')
+    subtitles = data.get('subtitles')
+    if not video or not subtitles:
+        return jsonify({'error': 'video and subtitles required'}), 400
+    font_size = int(data.get('fontSize', 24))
+    font_color = data.get('fontColor', '#ffffff')
+    position = data.get('position', 'bottom')
+    output_path = os.path.join('static', 'exports', 'rendered.mp4')
+    try:
+        compose_video(
+            video,
+            subtitles,
+            [],
+            output_path=output_path,
+            font_size=font_size,
+            font_color=font_color,
+            position=position,
+        )
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+
+    return jsonify({'output': output_path}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
